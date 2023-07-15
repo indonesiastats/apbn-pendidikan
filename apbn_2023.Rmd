@@ -1,0 +1,109 @@
+---
+title: "APBN 2023"
+output: html_document
+date: "2023-05-29"
+---
+
+# Load Packages
+```{r}
+library(plotly)
+library(htmlwidgets)
+library(ggplot2)
+library(ggthemes)
+library(ggsci)
+library(scales)
+library(showtext)
+```
+
+# Data dan treemap
+```{r}
+# Define Labels and Parents
+labels = c("Pelayanan Umum", "Pertahanan", "Ketertiban & Keamanan", "Ekonomi", "Perlindungan Lingkungan Hidup", "Perumahan & Fasilitas Umum", "Kesehatan", "Pariwisata", "Agama", "Pendidikan", "Perlindungan Sosial", "Transfer ke Daerah")
+parents = c("", "", "", "", "", "", "", "", "", "", "", "")
+values = c(664.1, 134.3, 182.6, 634.1, 13.1, 31.7, 96.6, 3.6, 11.2, 234.1, 241, 814.7)
+
+fig <- plot_ly(
+  type='treemap',
+  labels=labels,
+  parents=parents,
+  values= c(664.1, 134.3, 182.6, 634.1, 13.1, 31.7, 96.6, 3.6, 11.2, 234.1, 241, 814.7),
+  textinfo="label+value+percent parent",
+  # domain=list(column=0)
+  marker=list(colorscale='Reds'),
+  textposition = 'middle center',
+  textfont = list(family="Helvetica", size=40, color = '#FFFFFF'), # white color 
+  )
+```
+
+# Visualisasi
+```{r}
+op <- options()
+
+
+options(viewer = NULL)
+
+fig %>% htmlwidgets::onRender(
+  "function(el, x) {
+  var gd = document.getElementById(el.id); 
+  Plotly.downloadImage(gd, {format: 'png', width: 1600, height: 1200, filename: 'plot'});
+  }"
+ )
+
+options(viewer = op$viewer)
+```
+
+# Pendidikan
+```{r}
+df <- read.csv("apbn_2023_pendidikan.csv")
+```
+
+# Visualisasi Pendidikan
+```{r}
+options(scipen=10)
+
+df %>%
+  ggplot(aes(x=fungsi, y=anggaran_dalam_trilliun, fill=sub_fungsi)) +
+  geom_bar(stat = 'identity') + 
+  geom_text(aes(label=format(anggaran_dalam_trilliun, big.mark = ",", scientific=FALSE)), position = position_stack(vjust = 0.5), size = 4, family='Palatino') +
+  theme_classic() +
+  theme(legend.position = "top",
+        text = element_text(family = 'Palatino')) +
+  labs(x = "",
+       y = "Anggaran dalam Trilliun",
+       title = "",
+       fill=NULL) + 
+  scale_y_continuous(labels=comma) +
+  scale_fill_jco()
+```
+
+# Persentase Pendidikan
+```{r}
+df_persentase <- read.csv("apbn_2023_pendidikan_persentase.csv")
+```
+
+```{r}
+str(df_persentase)
+```
+
+
+# Visualisasi Pendidikan
+```{r}
+df_persentase %>%
+  ggplot(aes(x=tahun, y=as.numeric(persentase))) +
+  geom_line(stat = 'identity', color = "#800000") +
+  theme_clean() +
+  theme(legend.position = "top",
+        text = element_text(family = 'Palatino'),
+        axis.line.y=element_blank(),
+        axis.line.x = element_line(),
+        plot.background=element_blank()) +
+  labs(x = "",
+       y = "",
+       title = "",
+       fill=NULL) + 
+  scale_y_continuous(breaks = seq(0, 20, by = 5)) +
+  scale_x_continuous(breaks = c(1994, 2000, 2005, 2010, 2015, 2020)) +
+  expand_limits(y = 0) +
+  annotate("text", label="% Pendidikan\ndari total\nAPBN Indonesia", x = 2019.35, y = 15.4, size = 3, family = 'Palatino', color = "#800000")
+```
+
